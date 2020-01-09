@@ -11,22 +11,26 @@ class Credentials implements CredentialsInterface, \Serializable
     private $secret;
     private $token;
     private $expires;
+    private $refreshIn;
 
     /**
      * Constructs a new BasicAWSCredentials object, with the specified AWS
      * access key and AWS secret key
      *
-     * @param string $key     AWS access key ID
-     * @param string $secret  AWS secret access key
-     * @param string $token   Security token to use
-     * @param int    $expires UNIX timestamp for when credentials expire
+     * @param string $key       AWS access key ID
+     * @param string $secret    AWS secret access key
+     * @param string $token     Security token to use
+     * @param int    $expires   UNIX timestamp for when credentials expire
+     * @param int    $refreshIn A number of seconds used to anticipate the AWS
+     *                          credentials refresh before they expire.
      */
-    public function __construct($key, $secret, $token = null, $expires = null)
+    public function __construct($key, $secret, $token = null, $expires = null, $refreshIn = 0)
     {
         $this->key = trim($key);
         $this->secret = trim($secret);
         $this->token = $token;
         $this->expires = $expires;
+        $this->refreshIn = $refreshIn;
     }
 
     public static function __set_state(array $state)
@@ -61,7 +65,7 @@ class Credentials implements CredentialsInterface, \Serializable
 
     public function isExpired()
     {
-        return $this->expires !== null && time() >= $this->expires;
+        return $this->expires !== null && time() + $this->refreshIn >= $this->expires;
     }
 
     public function toArray()

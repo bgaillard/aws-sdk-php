@@ -30,6 +30,9 @@ class InstanceProfileProvider
     private $client;
 
     /** @var int */
+    private $refreshIn;
+
+    /** @var int */
     private $retries;
 
     /** @var int */
@@ -46,6 +49,7 @@ class InstanceProfileProvider
      *
      * - timeout: Connection timeout, in seconds.
      * - profile: Optional EC2 profile name, if known.
+     * - refresh_in: Optional number of seconds used to anticipate the AWS credentials refresh before they expire.
      * - retries: Optional number of retries to be attempted.
      *
      * @param array $config Configuration options.
@@ -54,6 +58,7 @@ class InstanceProfileProvider
     {
         $this->timeout = (float) getenv(self::ENV_TIMEOUT) ?: (isset($config['timeout']) ? $config['timeout'] : 1.0);
         $this->profile = isset($config['profile']) ? $config['profile'] : null;
+        $this->refreshIn = isset($config['refresh_in']) ? $config['refresh_in'] : 0;
         $this->retries = (int) getenv(self::ENV_RETRIES) ?: (isset($config['retries']) ? $config['retries'] : 3);
         $this->attempts = 0;
         $this->client = isset($config['client'])
@@ -174,7 +179,8 @@ class InstanceProfileProvider
                 $result['AccessKeyId'],
                 $result['SecretAccessKey'],
                 $result['Token'],
-                strtotime($result['Expiration'])
+                strtotime($result['Expiration']),
+                $this->refreshIn
             );
         });
     }

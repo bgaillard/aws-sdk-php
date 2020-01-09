@@ -22,8 +22,12 @@ class EcsCredentialProvider
     /** @var float|mixed */
     private $timeout;
 
+    /** @var int */
+    private $refreshIn;
+
     /**
      *  The constructor accepts following options:
+     *  - refresh_in: (optional) Number of seconds used to anticipate the AWS credentials refresh before they expire.
      *  - timeout: (optional) Connection timeout, in seconds, default 1.0
      *  - client: An EcsClient to make request from
      *
@@ -31,6 +35,7 @@ class EcsCredentialProvider
      */
     public function __construct(array $config = [])
     {
+        $this->refreshIn = isset($config['refresh_in']) ? $config['refresh_in'] : 0;
         $this->timeout = (float) getenv(self::ENV_TIMEOUT) ?: (isset($config['timeout']) ? $config['timeout'] : 1.0);
         $this->client = isset($config['client'])
             ? $config['client']
@@ -58,7 +63,8 @@ class EcsCredentialProvider
                 $result['AccessKeyId'],
                 $result['SecretAccessKey'],
                 $result['Token'],
-                strtotime($result['Expiration'])
+                strtotime($result['Expiration']),
+                $this->refreshIn
             );
         })->otherwise(function ($reason) {
             $reason = is_array($reason) ? $reason['exception'] : $reason;
